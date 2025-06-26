@@ -1,0 +1,286 @@
+
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Questionnaire diabétologie - Pré-consultation</title>
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f8f9fa;
+  color: #333;
+  padding: 30px;
+  margin: 0;
+}
+.page {
+  display: none;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+  max-width: 800px;
+  margin: auto;
+}
+.page.active {
+  display: block;
+}
+.question {
+  margin-bottom: 30px;
+}
+h2, h3 {
+  color: #146C94;
+}
+input[type="text"], input[type="number"], select, textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-top: 8px;
+  font-size: 16px;
+}
+input[type="checkbox"] {
+  margin-right: 8px;
+}
+button {
+  background-color: #146C94;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-right: 15px;
+}
+button:hover {
+  background-color: #0f5a7d;
+}
+textarea {
+  resize: vertical;
+}
+label {
+  font-weight: bold;
+  font-size: 17px;
+}
+hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 30px 0;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  height: 20px;
+}
+.progress-bar {
+  height: 100%;
+  background-color: #146C94;
+  border-radius: 10px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+</style></head>
+<body><div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+<h1>📄 Questionnaire de diabétologie - Pré-consultation</h1>
+<div class="page active" id="page1">
+<div class="question"><label>Quel est votre nom ?</label><input id="nom" type="text"/></div>
+<div class="question"><label>Quel est votre âge ?</label><input id="age" type="number"/></div>
+<div class="question"><label>Quel type de diabète avez-vous ?</label>
+<select id="diabeteType">
+<option value="Type 1">Type 1</option>
+<option value="Type 2">Type 2</option>
+<option value="Gestationnel">Gestationnel</option>
+<option value="Autres">Autres</option>
+</select>
+</div>
+<button onclick="changerPage(2)">Suivant</button>
+</div>
+<div class="page" id="page2">
+<div class="question">
+<label>💉 Traitements injectables</label>
+<input id="chk_insuline_rapide" type="checkbox"/> Insuline rapide (ex : Novorapid, Humalog, Fiasp, Apidra, Lumjiev)<br/>
+<input id="chk_insuline_lente" type="checkbox"/> Insuline lente (ex : Lantus, Levemir, Tresiba, Toujeo, Abasaglar)<br/>
+<input id="chk_insuline_mixte" type="checkbox"/> Insuline mixte (ex : Humalog Mix, Novomix)<br/>
+<input id="chk_glp1" type="checkbox"/> Analogue GLP-1 (ex : Ozempic, Trulicity, Victoza)<br/>
+</div>
+<div class="question">
+<label>💊 Traitements oraux</label>
+<input id="chk_biguanide" type="checkbox"/> Metformine (ex : Glucophage, Stagid)<br/>
+<input id="chk_sulfamides" type="checkbox"/> Sulfamides hypoglycémiants (ex : Daonil, Diamicron, Amarel, Glibenclamide, Gliclazide)<br/>
+<input id="chk_gliptines" type="checkbox"/> Gliptines (ex : Januvia, Galvus)<br/>
+<input id="chk_glifozines" type="checkbox"/> Glifozines (ex : Forxiga, Jardiance)<br/>
+</div>
+<button onclick="changerPage(1)">Précédent</button>
+<button onclick="changerPage(3)">Suivant</button>
+</div>
+<div class="page" id="page3">
+<div id="questionsParTraitement"></div>
+<button onclick="changerPage(2)">Précédent</button>
+<button onclick="if (confirm('Êtes-vous sûr de valider vos réponses ? Vous ne pourrez plus revenir en arrière.')) changerPage(4);">Voir la correction</button>
+</div>
+<div class="page" id="page4">
+<div class="question"><h2>🧠 Correction de vos réponses</h2><p id="correctionResult"></p></div>
+<button onclick="changerPage(5)">Suivant</button></div>
+<script>
+const traitements = {
+  "insuline_rapide": { nom: "Insuline rapide", effets: ["Hypoglycémie", "Prise de poids"], benefices: ["Diminution de la glycémie"], meca: ["Ajout d'insuline manuel"] },
+  "insuline_lente": { nom: "Insuline lente", effets: ["Hypoglycémie", "Prise de poids"], benefices: ["Diminution de la glycémie"], meca: ["Ajout d'insuline manuel"] },
+  "insuline_mixte": { nom: "Insuline mixte", effets: ["Hypoglycémie", "Prise de poids"], benefices: ["Diminution de la glycémie"], meca: ["Ajout d'insuline manuel"] },
+  "glp1": { nom: "Analogue GLP1", effets: ["Nausées / Vomissements", "Diarrhée"], benefices: ["Diminution de la glycémie", "Perte de poids", "Moins de risques cardiovasculaires"], meca: ["Réduit l’appétit", "Augmente l’effet des hormones intestinales"] },
+  "biguanide": { nom: "Metformine", effets: ["Nausées / Vomissements", "Diarrhée"], benefices: ["Diminution de la glycémie", "Moins de risques cardiovasculaires"], meca: ["Améliore la sensibilité à l’insuline"] },
+  "sulfamides": { nom: "Sulfamides", effets: ["Hypoglycémie", "Prise de poids"], benefices: ["Diminution de la glycémie"], meca: ["Ajout d'insuline manuel"] },
+  "gliptines": { nom: "Gliptines", effets: [], benefices: ["Diminution de la glycémie"], meca: ["Augmente l’effet des hormones intestinales"] },
+  "glifozines": { nom: "Glifozines", effets: ["Mycoses urinaires", "Infections urinaires"], benefices: ["Diminution de la glycémie", "Perte de poids", "Moins de risques cardiovasculaires"], meca: ["Augmente l’élimination de sucre dans les urines"] }
+};
+
+function changerPage(num) {
+  const pourcentage = Math.min((num - 1) / 6 * 100, 100);
+  document.getElementById("progressBar").style.width = pourcentage + "%";
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById("page" + num).classList.add("active");
+  if (num === 3) setTimeout(genererQuestionsTraitements, 100);
+  if (num === 4) afficherCorrection();
+}
+
+function genererQuestionsTraitements() {
+  const conteneur = document.getElementById("questionsParTraitement");
+  conteneur.innerHTML = "";
+  for (const id in traitements) {
+    const chk = document.getElementById("chk_" + id);
+    if (chk && chk.checked) {
+      const t = traitements[id];
+      const div = document.createElement("div");
+      div.className = "question";
+
+      let html = `<h3>${t.nom}</h3>`;
+      html += `<b>Quels sont selon vous les effets indésirables ?</b><br>`;
+      const effets = ["Hypoglycémie", "Prise de poids", "Mycoses urinaires", "Nausées / Vomissements", "Diarrhée", "Infections urinaires"];
+      effets.forEach(function(e) {
+        html += `<input type="checkbox" name="${id}_effets" value="${e}"> ${e}<br>`;
+      });
+
+      html += `<br><b>Quels sont les bénéfices ?</b><br>`;
+      const benefices = ["Diminution de la glycémie", "Perte de poids", "Moins de risques cardiovasculaires"];
+      benefices.forEach(function(b) {
+        html += `<input type="checkbox" name="${id}_benefices" value="${b}"> ${b}<br>`;
+      });
+
+      html += `<br><b>Quels sont les mécanismes d’action ?</b><br>`;
+      const meca = ["Ajout d'insuline manuel", "Améliore la sensibilité à l’insuline", "Augmente l’élimination de sucre dans les urines", "Augmente l’effet des hormones intestinales", "Réduit l’appétit"];
+      meca.forEach(function(m) {
+        html += `<input type="checkbox" name="${id}_meca" value="${m}"> ${m}<br>`;
+      });
+
+      div.innerHTML = html;
+      conteneur.appendChild(div);
+    }
+  }
+}
+
+function afficherCorrection() {
+  const result = document.getElementById("correctionResult");
+  let html = "";
+  for (const id in traitements) {
+    const checkbox = document.getElementById("chk_" + id);
+    if (checkbox && checkbox.checked) {
+      const t = traitements[id];
+      const reponsesEffets = Array.from(document.querySelectorAll(`input[name='${id}_effets']:checked`)).map(e => e.value);
+      const reponsesBenefices = Array.from(document.querySelectorAll(`input[name='${id}_benefices']:checked`)).map(e => e.value);
+      const reponsesMeca = Array.from(document.querySelectorAll(`input[name='${id}_meca']:checked`)).map(e => e.value);
+
+      const bonnesEffets = t.effets;
+      const bonnesBenefices = t.benefices;
+      const bonnesMeca = t.meca;
+
+      html += `<h3 style='margin-top: 1em; color: #1a3e5f;'>🩺 ${t.nom}</h3>`;
+
+      html += `<b>Effets indésirables :</b><br>`;
+      const toutesEffets = Array.from(new Set([...bonnesEffets, ...reponsesEffets]));
+      toutesEffets.forEach(function(e) {
+        if (bonnesEffets.includes(e) && reponsesEffets.includes(e)) {
+          html += `<div style="color: green;">☑️ ${e} (✅ correct)</div>`;
+        } else if (!bonnesEffets.includes(e) && reponsesEffets.includes(e)) {
+          html += `<div style="color: red;">☑️ ${e} (❌ faux)</div>`;
+        } else if (bonnesEffets.includes(e) && !reponsesEffets.includes(e)) {
+          html += `<div style="color: orange;">⬜ ${e} (⚠️ oublié)</div>`;
+        }
+      });
+
+      
+      if (bonnesEffets.includes("Prise de poids")) {
+        html += `<div style="font-style: italic; color: #555; margin-top: 5px;">💡 La prise de poids est surtout observée en cas d’utilisation inadaptée ou de surdosage. Bien utilisée, elle n’est pas systématique.</div>`;
+      }
+    
+      html += `<br><b>Bénéfices :</b><br>`;
+      const tousBenefices = ["Diminution de la glycémie", "Perte de poids", "Moins de risques cardiovasculaires"];
+      tousBenefices.forEach(function(b) {
+        if (bonnesBenefices.includes(b) && reponsesBenefices.includes(b)) {
+          html += `<div style="color: green;">☑️ ${b} (✅ correct)</div>`;
+        } else if (!bonnesBenefices.includes(b) && reponsesBenefices.includes(b)) {
+          html += `<div style="color: red;">☑️ ${b} (❌ faux)</div>`;
+        } else if (bonnesBenefices.includes(b) && !reponsesBenefices.includes(b)) {
+          html += `<div style="color: orange;">⬜ ${b} (⚠️ oublié)</div>`;
+        }
+      });
+
+      html += `<br><b>Mécanismes d’action :</b><br>`;
+      const tousMeca = ["Ajout d'insuline manuel", "Améliore la sensibilité à l’insuline", "Augmente l’élimination de sucre dans les urines", "Augmente l’effet des hormones intestinales", "Réduit l’appétit"];
+      tousMeca.forEach(function(m) {
+        if (bonnesMeca.includes(m) && reponsesMeca.includes(m)) {
+          html += `<div style="color: green;">☑️ ${m} (✅ correct)</div>`;
+        } else if (!bonnesMeca.includes(m) && reponsesMeca.includes(m)) {
+          html += `<div style="color: red;">☑️ ${m} (❌ faux)</div>`;
+        } else if (bonnesMeca.includes(m) && !reponsesMeca.includes(m)) {
+          html += `<div style="color: orange;">⬜ ${m} (⚠️ oublié)</div>`;
+        }
+      });
+
+      html += `<br><i style="color: #555;">${
+        reponsesEffets.length >= bonnesEffets.length - 1 && reponsesEffets.every(function(r){ return bonnesEffets.includes(r); })
+          ? "✅ Vous connaissez bien ce traitement !"
+          : "🧐 Vous avez encore des points à revoir sur ce traitement."
+      }</i><br><hr style="margin-top: 1em;">`;
+    }
+  }
+  result.innerHTML = html || "<i>Aucun traitement sélectionné.</i>";
+}
+</script>
+
+<div class="page" id="page5">
+<button onclick="changerPage(4)">Précédent</button>
+<div class="question">
+<label>😊 Êtes-vous satisfait(e) de la prise en charge de votre diabète ?</label><br/>
+<textarea placeholder="Expliquez brièvement..." rows="3" style="width: 100%;"></textarea>
+</div>
+<div class="question">
+<label>🤝 Est-ce que vous vous sentez bien suivi(e) par votre pharmacien ?</label><br/>
+<textarea placeholder="Donnez votre ressenti honnêtement !" rows="3" style="width: 100%;"></textarea>
+</div>
+<div class="question">
+<label>🟨 Avez-vous assez de boîtes DASRI (les boîtes jaunes pour objets piquants) ?</label><br/>
+<textarea placeholder="Cochez oui / non ou commentez" rows="3" style="width: 100%;"></textarea>
+</div>
+<div class="question">
+<label>🗣️ Autres remarques ou informations que vous souhaitez partager :</label><br/>
+<textarea placeholder="Exprimez-vous librement !" rows="3" style="width: 100%;"></textarea>
+</div>
+<button onclick="changerPage(6)">Suivant</button>
+</div>
+
+<div class="page" id="page6">
+<div class="question">
+<label>🛠️ Avez-vous des suggestions ou remarques pour améliorer ce questionnaire ?</label><br/>
+<textarea rows="4" style="width: 100%;"></textarea>
+</div>
+<button onclick="changerPage(5)">Précédent</button>
+<button onclick="changerPage(7)">Suivant</button>
+</div><div class="page" id="page7"><button onclick="changerPage(6)">Précédent</button>
+<h2>🎉 Merci d'avoir complété ce questionnaire</h2>
+<p>Vos réponses ont bien été enregistrées.</p>
+<p>Nous vous remercions pour votre participation 💙</p>
+</div>
+</body>
+</html>
